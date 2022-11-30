@@ -1,0 +1,31 @@
+use serde::{Deserialize, Serialize};
+
+use super::{Codec, DeserializationError, SerializationError};
+
+/// MessagePack codec.
+///
+/// See [rmp_serde] for details.
+/// This serializes structures as maps.
+#[cfg_attr(docsrs, doc(cfg(feature = "codec-message-pack")))]
+#[derive(Clone, Serialize, Deserialize)]
+pub struct MessagePack;
+
+impl Codec for MessagePack {
+    #[inline]
+    fn serialize<Writer, Item>(mut writer: Writer, item: &Item) -> Result<(), super::SerializationError>
+    where
+        Writer: std::io::Write,
+        Item: serde::Serialize,
+    {
+        rmp_serde::encode::write_named(&mut writer, item).map_err(SerializationError::new)
+    }
+
+    #[inline]
+    fn deserialize<Reader, Item>(reader: Reader) -> Result<Item, super::DeserializationError>
+    where
+        Reader: std::io::Read,
+        Item: serde::de::DeserializeOwned,
+    {
+        rmp_serde::decode::from_read(reader).map_err(DeserializationError::new)
+    }
+}

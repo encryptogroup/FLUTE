@@ -1,0 +1,20 @@
+#STATISTICS
+#ORIGINAL LUTS: 8
+
+#GROUPED LUTS: 1
+#DEPTH: 1
+#XOR: 0
+#NOT: 0
+#XNOR: 0
+#ASSIGN: 0
+
+#INPUTS 8
+addr[0] addr[1] addr[2] addr[3] addr[4] addr[5] addr[6] addr[7] 
+#OUTPUTS 8
+dout[0] dout[1] dout[2] dout[3] dout[4] dout[5] dout[6] dout[7] 
+#constant zero
+0
+#constant one
+1
+#LUTs
+LUT 8 8 addr[0] addr[1] addr[2] addr[3] addr[4] addr[5] addr[6] addr[7] 8 11111111 0x4f1ead396f247a0410bdb210c006eab568ab4bfa8acb7a13b14ede67096c6eed dout[0] 8 11111111 0xc870974094ead8a96a450b2ef33486b4e61a4c5e97816f7a7bae007d4c53fc7d dout[1] 8 11111111 0xac39b6c0d6ce2efc577d64e03b0c3ffb23a869a2a428c424a16387fb3b48b4c6 dout[2] 8 11111111 0x4e9ddb76c892fb1be9da849cf6ac6c1b2568ea2effa8527d109020a2193d586a dout[3] 8 11111111 0xf210a3aece472e532624b286bc48ecb4f7f17a494ce30f58c2b0f97752b8b11e dout[4] 8 11111111 0x54b248130b4f256f7d8dcc4706319e086bc2aa4e0d787aa4f8045f7b6d98dd7f dout[5] 8 11111111 0x21e0b833255917823f6bcb91b30db559e4851b3bf3ab2560980a3cc2c2fdb4ff dout[6] 8 11111111 0x52379de7b844e3e14cb3770196ca0329e7bac28f866aac825caa2ec7bf977090 dout[7]  

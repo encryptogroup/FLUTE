@@ -1,0 +1,10 @@
+/target
+Cargo.lock
+*.dot
+*.log
+*heaptrack*
+*massif*
+memory*.dat
+*.jsonl
+*.json
+*.csv

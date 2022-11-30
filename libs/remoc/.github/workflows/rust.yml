@@ -1,0 +1,216 @@
+name: Rust
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  rustfmt:
+    name: Check formatting and version dependencies
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Check version dependencies
+        run: ./check_version.sh
+
+      - name: Run cargo fmt
+        run: cargo fmt --all -- --check
+
+  msrv:
+    name: Check with MSRV
+    runs-on: ubuntu-latest
+    env:
+      minrust: 1.59
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install Rust ${{ env.minrust }}
+        run: rustup default ${{ env.minrust }}
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v1
+
+      - name: Run cargo check
+        run: cargo check
+
+  # Lints
+  build-docs:
+    name: Build docs
+    needs: [msrv]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v1
+
+      - name: Build docs
+        env:
+          RUSTDOCFLAGS: -D rustdoc::broken_intra_doc_links
+        run: cargo doc --no-deps
+
+  check-examples:
+    name: Check examples
+    needs: [msrv]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v1
+
+      - name: Check examples
+        run: |
+          cargo check --manifest-path examples/rtc/counter-client/Cargo.toml
+          cargo check --manifest-path examples/rtc/counter-server/Cargo.toml
+
+  clippy:
+    name: Clippy
+    needs: [msrv]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v1
+
+      - name: Run clippy
+        run: cargo clippy --tests
+
+  # Tests
+  test:
+    name: Test with default features
+    needs: [msrv]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v1
+
+      - name: Run cargo test
+        run: cargo test
+
+  test-codecs:
+    name: Test with codec ${{ matrix.codec }}
+    needs: [test]
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        codec:
+          - bincode
+          - cbor
+          - ciborium
+          - message-pack
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v1
+
+      - name: Run cargo test
+        env:
+          RUSTFLAGS: -A deprecated
+        run: cargo test --no-default-features --features full --features default-codec-${{ matrix.codec }}
+
+  test-features:
+    name: Test ${{ matrix.feature }} feature
+    needs: [test]
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        feature:
+          - rch
+          - rfn
+          - robj
+          - robs
+          - rtc
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v1
+
+      - name: Run cargo test
+        run: cargo test --no-default-features --features ${{ matrix.feature }} --features default-codec-json
+
+  check-features-without-codec:
+    name: Check ${{ matrix.feature }} feature without codec
+    needs: [test]
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        feature:
+          - none
+          - rch
+          - rfn
+          - robj
+          - robs
+          - rtc
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v1
+
+      - name: Run cargo check
+        run: |
+          if [ "${{ matrix.feature }}" = "none" ] ; then cargo check --no-default-features ; else \
+          cargo check --no-default-features --features ${{ matrix.feature }} ; fi
+
+  # Coverage
+  coverage:
+    name: Code coverage
+    needs: [test-codecs, test-features, check-features-without-codec, rustfmt]
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install cargo tarpaulin
+        uses: baptiste0928/cargo-install@v1
+        with:
+          crate: cargo-tarpaulin
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v1
+
+      - name: Run cargo tarpaulin
+        shell: bash
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        run: |
+          cargo tarpaulin --out Xml
+          bash <(curl -s https://codecov.io/bash)

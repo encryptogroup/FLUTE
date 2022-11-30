@@ -1,0 +1,63 @@
+[package]
+name = "zappot"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+silent_ot = ["bitpolymul", "aligned-vec"]
+c_sse = []
+
+[dependencies]
+aes = "0.8.1"
+async-trait = "0.1.53"
+aligned-vec = {path = "../aligned-vec", optional = true}
+bitpolymul = {path = "../bitpolymul", optional = true}
+bitvec = "1.0.0"
+byte-slice-cast = "1.2.1"
+bytemuck = { version = "1.9.1", features = ["derive"]}
+crossbeam-channel = "0.5.4"
+curve25519-dalek = { version = "4.0.0-pre.2", features = ["serde"]}
+futures = { version = "0.3.21", features = ["executor"]}
+rand = "0.8.5"
+rand_core = "0.6.3"
+rayon = "1.5.3"
+serde = { version = "1.0.137", features = ["derive"]}
+blake2 = "0.10.4"
+generic-array = { version = "0.14.5", features = ["serde"]}
+pin-project = "1.0.10"
+mpc-channel = {path = "../mpc-channel"}
+num-integer = "0.1.45"
+num-traits = "0.2.15"
+num-prime = "0.4.1"
+once_cell = "1.12.0"
+tokio = { version = "1.18.2", features = ["sync", "macros", "net"]}
+tokio-serde = { version = "0.8.0", features = ["bincode"]}
+tokio-util = { version = "0.7.3", features = ["codec"]}
+ndarray = { version = "0.15.4", features = ["rayon"]}
+thiserror = "1.0.31"
+tracing = "0.1.35"
+remoc = { path = "../../../remoc/remoc", default-features = false, features = ["rch", "codec-bincode"]}
+
+[dev-dependencies]
+criterion = { version = "0.3.5", features = ["async_tokio"]}
+clap = { version = "3.2.8", features = ["derive"]}
+tokio = { version = "1.18.2", features = ["full"]}
+ocelot = { git = "https://github.com/GaloisInc/swanky.git" }
+scuttlebutt = { git = "https://github.com/GaloisInc/swanky.git" }
+rand_core_5_1 = { version = "0.5.1", package = "rand_core"}
+tracing-subscriber = { version = "0.3.9", features = ["env-filter"]}
+
+
+[build-dependencies]
+cc = "1.0.73"
+
+[[bench]]
+name = "bench_main"
+harness = false
+required-features = ["c_sse", "silent_ot"]
+
+[[example]]
+name = "silent_ot"
+required-features = ["silent_ot"]

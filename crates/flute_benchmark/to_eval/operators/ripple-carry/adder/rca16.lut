@@ -1,0 +1,27 @@
+#STATISTICS
+#ORIGINAL LUTS: 25
+
+#GROUPED LUTS: 8
+#DEPTH: 5
+#XOR: 0
+#NOT: 0
+#XNOR: 0
+#ASSIGN: 0
+
+#INPUTS 32
+x_a[0] x_a[1] x_a[2] x_a[3] x_a[4] x_a[5] x_a[6] x_a[7] x_a[8] x_a[9] x_a[10] x_a[11] x_a[12] x_a[13] x_a[14] x_a[15] x_b[0] x_b[1] x_b[2] x_b[3] x_b[4] x_b[5] x_b[6] x_b[7] x_b[8] x_b[9] x_b[10] x_b[11] x_b[12] x_b[13] x_b[14] x_b[15] 
+#OUTPUTS 17
+wx[0] wx[1] wx[2] wx[3] wx[4] wx[5] wx[6] wx[7] wx[8] wx[9] wx[10] wx[11] wx[12] wx[13] wx[14] wx[15] wx[16] 
+#constant zero
+0
+#constant one
+1
+#LUTs
+LUT 8 5 x_a[0] x_a[1] x_a[2] x_a[3] x_b[0] x_b[1] x_b[2] x_b[3] 2 10001000 0x6 wx[0] 4 11001100 0x936c wx[1] 6 11101110 0xe1c3870f1e3c78f0 wx[2] 8 11111111 0xfe01fc03f807f00fe01fc03f807f00ff01fe03fc07f80ff01fe03fc07f80ff00 wx[3] 8 11111111 0xfffefffcfff8fff0ffe0ffc0ff80ff00fe00fc00f800f000e000c00080000000 n54  
+LUT 2 2 x_a[7] x_b[7] 2 11 0x1 n60 2 11 0x8 n62  
+LUT 8 5 n54 n60 x_a[4] x_a[5] x_a[6] x_b[4] x_b[5] x_b[6] 3 10100100 0x96 wx[4] 5 10110110 0xe1871e78 wx[5] 7 10111111 0xfe01f807e01f807f01fe07f81fe07f80 wx[6] 7 10111111 0xfffefff8ffe0ff80fe00f800e0008000 n58 8 11111111 0x3333333233333320333332003333200033320000332000003200000020000000 n61  
+LUT 3 1 n58 x_a[7] x_b[7] 3 111 0x96 wx[7]  
+LUT 8 2 n61 n62 x_a[8] x_a[9] x_a[10] x_b[8] x_b[9] x_b[10] 2 11000000 0xe n63 8 11111111 0xfffffffeffffffe0fffffe00ffffe000fffe0000ffe00000fe000000e0000000 n67  
+LUT 7 3 n63 x_a[8] x_a[9] x_a[10] x_b[8] x_b[9] x_b[10] 3 1100100 0x96 wx[8] 5 1110110 0xe1871e78 wx[9] 7 1111111 0xfe01f807e01f807f01fe07f81fe07f80 wx[10]  
+LUT 7 4 n67 x_a[11] x_a[12] x_a[13] x_b[11] x_b[12] x_b[13] 3 1100100 0x96 wx[11] 5 1110110 0xe1871e78 wx[12] 7 1111111 0xfe01f807e01f807f01fe07f81fe07f80 wx[13] 7 1111111 0xfffefff8ffe0ff80fe00f800e0008000 n71  
+LUT 5 3 n71 x_a[14] x_a[15] x_b[14] x_b[15] 3 11010 0x96 wx[14] 5 11111 0xe1871e78 wx[15] 5 11111 0xfef8e080 wx[16]  

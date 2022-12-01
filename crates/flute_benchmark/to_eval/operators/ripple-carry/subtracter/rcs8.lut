@@ -1,0 +1,21 @@
+#STATISTICS
+#LUT: 11
+#GROUPED LUTS: 3
+#DEPTH: 3
+#XOR: 0
+#NOT: 0
+#XNOR: 0
+#ASSIGN: 0
+
+#INPUTS 16
+x_a[0] x_a[1] x_a[2] x_a[3] x_a[4] x_a[5] x_a[6] x_a[7] x_b[0] x_b[1] x_b[2] x_b[3] x_b[4] x_b[5] x_b[6] x_b[7] 
+#OUTPUTS 9
+wx[0] wx[1] wx[2] wx[3] wx[4] wx[5] wx[6] wx[7] wx[8] 
+#constant zero
+0
+#constant one
+1
+#LUTs
+LUT 8 5 x_a[0] x_a[1] x_a[2] x_a[3] x_b[0] x_b[1] x_b[2] x_b[3] 2 10001000 0x6 wx[0] 4 11001100 0x639c wx[1] 6 11101110 0x783c1e0f87c3e1f0 wx[2] 8 11111111 0x7f803fc01fe00ff007f803fc01fe00ff807fc03fe01ff00ff807fc03fe01ff00 wx[3] 8 11111111 0x8000c000e000f000f800fc00fe00ff00ff80ffc0ffe0fff0fff8fffcfffeffff n30  
+LUT 5 3 n30 x_a[4] x_a[5] x_b[4] x_b[5] 3 11010 0x69 wx[4] 5 11111 0x781e87e1 wx[5] 5 11111 0x80e0f8fe n33  
+LUT 5 3 n33 x_a[6] x_a[7] x_b[6] x_b[7] 3 11010 0x69 wx[6] 5 11111 0x781e87e1 wx[7] 5 11111 0x80e0f8fe wx[8]  

@@ -3,7 +3,7 @@ use clap::Parser;
 use flute_benchmark::load_circuits;
 use gmw::parse::lut_circuit::{Circuit, Gate};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::{Path, PathBuf};
@@ -38,11 +38,11 @@ struct Analysis {
     theoretical_ots: u64,
     // maps the input size to a map containing output sizes and a count for the respective
     // input/output size tuple
-    lut_sizes: HashMap<u64, HashMap<u64, u64>>,
-    non_interactive_gates: HashMap<OtherGate, u64>,
+    lut_sizes: BTreeMap<u64, BTreeMap<u64, u64>>,
+    non_interactive_gates: BTreeMap<OtherGate, u64>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
 enum OtherGate {
     Xor,
     Xnor,

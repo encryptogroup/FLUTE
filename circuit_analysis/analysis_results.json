@@ -1,0 +1,629 @@
+[
+  {
+    "file": "../flute/crates/flute_benchmark/to_eval/floating-point/fp_ieee_32/fp_ieee_add_32.lut",
+    "theoretical_setup_bits": 261912,
+    "theoretical_online_bits": 1522,
+    "theoretical_ots": 130956,
+    "lut_sizes": {
+      "4": {
+        "1": 3,
+        "2": 1,
+        "3": 1
+      },
+      "5": {
+        "1": 8,
+        "2": 1,
+        "3": 1
+      },
+      "6": {
+        "1": 6,
+        "2": 10
+      },
+      "7": {
+        "1": 40,
+        "2": 32,
+        "3": 19,
+        "4": 3,
+        "5": 1,
+        "6": 2
+      },
+      "8": {
+        "1": 75,
+        "2": 54,
+        "3": 38,
+        "4": 27,
+        "5": 8,
+        "6": 6,
+        "7": 2,
+        "8": 2,
+        "13": 1
+      }
+    },
+    "non_interactive_gates": {
+      "Xor": 1,
+      "Assign": 3
+    }
+  },
+  {
+    "file": "../flute/crates/flute_benchmark/to_eval/floating-point/fp_ieee_32/fp_ieee_cos_32.lut",
+    "theoretical_setup_bits": 624504,
+    "theoretical_online_bits": 3786,
+    "theoretical_ots": 312252,
+    "lut_sizes": {
+      "2": {
+        "1": 2
+      },
+      "3": {
+        "1": 1
+      },
+      "4": {
+        "1": 3,
+        "2": 1,
+        "3": 2
+      },
+      "5": {
+        "1": 17,
+        "2": 5,
+        "4": 1
+      },
+      "6": {
+        "1": 59,
+        "2": 18,
+        "3": 2,
+        "4": 4
+      },
+      "7": {
+        "1": 104,
+        "2": 56,
+        "3": 23,
+        "4": 6,
+        "5": 5,
+        "6": 2
+      },
+      "8": {
+        "1": 194,
+        "2": 150,
+        "3": 72,
+        "4": 34,
+        "5": 20,
+        "6": 12,
+        "7": 8,
+        "8": 7,
+        "10": 3,
+        "11": 2,
+        "12": 4,
+        "13": 1,
+        "14": 3,
+        "15": 1,
+        "17": 1,
+        "19": 1,
+        "21": 1,
+        "28": 1
+      }
+    },
+    "non_interactive_gates": {
+      "Not": 1,
+      "Assign": 6
+    }
+  },
+  {
+    "file": "../flute/crates/flute_benchmark/to_eval/floating-point/fp_ieee_32/fp_ieee_div_32.lut",
+    "theoretical_setup_bits": 708460,
+    "theoretical_online_bits": 4372,
+    "theoretical_ots": 354230,
+    "lut_sizes": {
+      "3": {
+        "1": 6
+      },
+      "4": {
+        "1": 11,
+        "2": 3,
+        "4": 1
+      },
+      "5": {
+        "1": 14,
+        "2": 9,
+        "3": 3
+      },
+      "6": {
+        "1": 51,
+        "2": 30,
+        "3": 2,
+        "4": 3
+      },
+      "7": {
+        "1": 84,
+        "2": 82,
+        "3": 52,
+        "4": 35,
+        "5": 12,
+        "6": 2
+      },
+      "8": {
+        "1": 170,
+        "2": 179,
+        "3": 94,
+        "4": 73,
+        "5": 27,
+        "6": 14,
+        "7": 5,
+        "8": 1,
+        "9": 1
+      }
+    },
+    "non_interactive_gates": {
+      "Assign": 1
+    }
+  },
+  {
+    "file": "../flute/crates/flute_benchmark/to_eval/floating-point/fp_ieee_32/fp_ieee_mult_32.lut",
+    "theoretical_setup_bits": 558612,
+    "theoretical_online_bits": 2782,
+    "theoretical_ots": 279306,
+    "lut_sizes": {
+      "2": {
+        "1": 1
+      },
+      "4": {
+        "1": 3,
+        "2": 1
+      },
+      "5": {
+        "1": 10,
+        "2": 1
+      },
+      "6": {
+        "1": 18,
+        "2": 11,
+        "3": 1,
+        "4": 1
+      },
+      "7": {
+        "1": 64,
+        "2": 45,
+        "3": 23,
+        "4": 11,
+        "5": 4,
+        "7": 1
+      },
+      "8": {
+        "1": 211,
+        "2": 131,
+        "3": 72,
+        "4": 35,
+        "5": 23,
+        "6": 7,
+        "7": 3,
+        "8": 2,
+        "9": 1
+      }
+    },
+    "non_interactive_gates": {
+      "Assign": 2
+    }
+  },
+  {
+    "file": "../flute/crates/flute_benchmark/to_eval/floating-point/fp_ieee_32/fp_ieee_sin_32.lut",
+    "theoretical_setup_bits": 655188,
+    "theoretical_online_bits": 3780,
+    "theoretical_ots": 327594,
+    "lut_sizes": {
+      "3": {
+        "1": 1,
+        "2": 1
+      },
+      "4": {
+        "1": 7,
+        "2": 1
+      },
+      "5": {
+        "1": 9,
+        "2": 8
+      },
+      "6": {
+        "1": 43,
+        "2": 16,
+        "3": 4,
+        "4": 2,
+        "5": 1
+      },
+      "7": {
+        "1": 117,
+        "2": 44,
+        "3": 14,
+        "4": 13,
+        "5": 3,
+        "6": 1,
+        "7": 1,
+        "10": 1,
+        "12": 1
+      },
+      "8": {
+        "1": 194,
+        "2": 154,
+        "3": 100,
+        "4": 42,
+        "5": 22,
+        "6": 16,
+        "7": 10,
+        "9": 5,
+        "10": 2,
+        "11": 1,
+        "12": 2,
+        "16": 1,
+        "20": 1,
+        "22": 1
+      }
+    },
+    "non_interactive_gates": {
+      "Not": 1,
+      "Assign": 6
+    }
+  },
+  {
+    "file": "../flute/crates/flute_benchmark/to_eval/floating-point/fp_ieee_32/fp_ieee_sqr_32.lut",
+    "theoretical_setup_bits": 237548,
+    "theoretical_online_bits": 1586,
+    "theoretical_ots": 118774,
+    "lut_sizes": {
+      "2": {
+        "1": 1
+      },
+      "5": {
+        "1": 5
+      },
+      "6": {
+        "1": 8,
+        "2": 5,
+        "3": 3,
+        "4": 2
+      },
+      "7": {
+        "1": 22,
+        "2": 18,
+        "3": 6,
+        "4": 6,
+        "5": 1
+      },
+      "8": {
+        "1": 53,
+        "2": 53,
+        "3": 38,
+        "4": 27,
+        "5": 16,
+        "6": 8,
+        "7": 5,
+        "8": 2,
+        "9": 2,
+        "10": 3,
+        "12": 1,
+        "13": 1,
+        "14": 1
+      }
+    },
+    "non_interactive_gates": {
+      "Assign": 3
+    }
+  },
+  {
+    "file": "../flute/crates/flute_benchmark/to_eval/floating-point/fp_ieee_32/fp_ieee_sqrt_32.lut",
+    "theoretical_setup_bits": 359432,
+    "theoretical_online_bits": 2198,
+    "theoretical_ots": 179716,
+    "lut_sizes": {
+      "2": {
+        "1": 2
+      },
+      "3": {
+        "1": 4,
+        "2": 1
+      },
+      "4": {
+        "1": 3,
+        "2": 3,
+        "3": 1
+      },
+      "5": {
+        "1": 9,
+        "2": 2,
+        "3": 2
+      },
+      "6": {
+        "1": 37,
+        "2": 17,
+        "3": 2,
+        "4": 1,
+        "5": 1
+      },
+      "7": {
+        "1": 42,
+        "2": 43,
+        "3": 19,
+        "4": 13,
+        "5": 10,
+        "6": 2,
+        "7": 2
+      },
+      "8": {
+        "1": 122,
+        "2": 69,
+        "3": 38,
+        "4": 23,
+        "5": 19,
+        "6": 6,
+        "7": 5,
+        "9": 2,
+        "11": 1
+      }
+    },
+    "non_interactive_gates": {
+      "Assign": 4
+    }
+  },
+  {
+    "file": "../flute/crates/flute_benchmark/to_eval/floating-point/fp_ieee_32/fp_ieee_sub_32.lut",
+    "theoretical_setup_bits": 250200,
+    "theoretical_online_bits": 1468,
+    "theoretical_ots": 125100,
+    "lut_sizes": {
+      "2": {
+        "1": 1
+      },
+      "3": {
+        "1": 2
+      },
+      "4": {
+        "1": 3,
+        "2": 1,
+        "3": 1
+      },
+      "5": {
+        "1": 3,
+        "2": 3,
+        "3": 2
+      },
+      "6": {
+        "1": 11,
+        "2": 3,
+        "3": 5
+      },
+      "7": {
+        "1": 36,
+        "2": 28,
+        "3": 16,
+        "4": 5,
+        "5": 2,
+        "8": 1
+      },
+      "8": {
+        "1": 65,
+        "2": 60,
+        "3": 41,
+        "4": 25,
+        "5": 6,
+        "6": 4,
+        "7": 1,
+        "9": 2,
+        "11": 1
+      }
+    },
+    "non_interactive_gates": {
+      "Assign": 3
+    }
+  },
+  {
+    "file": "../flute/crates/flute_benchmark/to_eval/operators/greater_than_recursive/gtr_32.lut",
+    "theoretical_setup_bits": 9388,
+    "theoretical_online_bits": 38,
+    "theoretical_ots": 4694,
+    "lut_sizes": {
+      "3": {
+        "2": 1
+      },
+      "7": {
+        "1": 1
+      },
+      "8": {
+        "1": 2,
+        "2": 7
+      }
+    },
+    "non_interactive_gates": {}
+  },
+  {
+    "file": "../flute/crates/flute_benchmark/to_eval/operators/ladner-fischer/adder/lfa32.lut",
+    "theoretical_setup_bits": 20592,
+    "theoretical_online_bits": 140,
+    "theoretical_ots": 10296,
+    "lut_sizes": {
+      "5": {
+        "1": 2
+      },
+      "6": {
+        "1": 1
+      },
+      "7": {
+        "2": 6,
+        "3": 1
+      },
+      "8": {
+        "1": 2,
+        "2": 4,
+        "3": 4,
+        "4": 5,
+        "5": 2
+      }
+    },
+    "non_interactive_gates": {}
+  },
+  {
+    "file": "../flute/crates/flute_benchmark/to_eval/operators/ladner-fischer/multiplier/lfmul32.lut",
+    "theoretical_setup_bits": 386668,
+    "theoretical_online_bits": 3702,
+    "theoretical_ots": 193334,
+    "lut_sizes": {
+      "4": {
+        "1": 1,
+        "2": 1
+      },
+      "5": {
+        "2": 10,
+        "3": 4,
+        "4": 1
+      },
+      "6": {
+        "1": 5,
+        "2": 17,
+        "3": 8,
+        "4": 21
+      },
+      "7": {
+        "1": 15,
+        "2": 36,
+        "3": 23,
+        "4": 31,
+        "5": 4,
+        "6": 2
+      },
+      "8": {
+        "1": 15,
+        "2": 43,
+        "3": 59,
+        "4": 84,
+        "5": 28,
+        "6": 77,
+        "7": 10,
+        "8": 6,
+        "9": 1,
+        "10": 1
+      }
+    },
+    "non_interactive_gates": {
+      "Xor": 1
+    }
+  },
+  {
+    "file": "../flute/crates/flute_benchmark/to_eval/operators/ladner-fischer/subtracter/lfs32.lut",
+    "theoretical_setup_bits": 20592,
+    "theoretical_online_bits": 140,
+    "theoretical_ots": 10296,
+    "lut_sizes": {
+      "5": {
+        "1": 2
+      },
+      "6": {
+        "1": 1
+      },
+      "7": {
+        "2": 6,
+        "3": 1
+      },
+      "8": {
+        "1": 2,
+        "2": 4,
+        "3": 4,
+        "4": 5,
+        "5": 2
+      }
+    },
+    "non_interactive_gates": {}
+  },
+  {
+    "file": "../flute/crates/flute_benchmark/to_eval/operators/ripple-carry/adder/rca32.lut",
+    "theoretical_setup_bits": 12400,
+    "theoretical_online_bits": 116,
+    "theoretical_ots": 6200,
+    "lut_sizes": {
+      "3": {
+        "1": 2,
+        "2": 2
+      },
+      "7": {
+        "3": 1
+      },
+      "8": {
+        "2": 3,
+        "3": 2,
+        "4": 1,
+        "5": 5,
+        "8": 1
+      }
+    },
+    "non_interactive_gates": {}
+  },
+  {
+    "file": "../flute/crates/flute_benchmark/to_eval/operators/ripple-carry/multiplier/rcmul32.lut",
+    "theoretical_setup_bits": 504820,
+    "theoretical_online_bits": 4214,
+    "theoretical_ots": 252410,
+    "lut_sizes": {
+      "4": {
+        "1": 2
+      },
+      "5": {
+        "1": 4
+      },
+      "6": {
+        "1": 9,
+        "2": 201,
+        "3": 1
+      },
+      "7": {
+        "1": 7,
+        "2": 42,
+        "3": 3,
+        "5": 1
+      },
+      "8": {
+        "1": 10,
+        "2": 223,
+        "3": 65,
+        "4": 38,
+        "5": 9,
+        "6": 15,
+        "7": 18,
+        "8": 19,
+        "9": 28,
+        "10": 8,
+        "11": 2,
+        "12": 1
+      }
+    },
+    "non_interactive_gates": {}
+  },
+  {
+    "file": "../flute/crates/flute_benchmark/to_eval/operators/ripple-carry/subtracter/rcs32.lut",
+    "theoretical_setup_bits": 11036,
+    "theoretical_online_bits": 112,
+    "theoretical_ots": 5518,
+    "lut_sizes": {
+      "3": {
+        "1": 3,
+        "2": 1
+      },
+      "5": {
+        "2": 1
+      },
+      "8": {
+        "2": 1,
+        "3": 1,
+        "4": 4,
+        "5": 4,
+        "8": 1
+      }
+    },
+    "non_interactive_gates": {}
+  },
+  {
+    "file": "../flute/crates/flute_benchmark/to_eval/sbox8.lut",
+    "theoretical_setup_bits": 988,
+    "theoretical_online_bits": 16,
+    "theoretical_ots": 494,
+    "lut_sizes": {
+      "8": {
+        "8": 1
+      }
+    },
+    "non_interactive_gates": {}
+  }
+]

@@ -3,9 +3,11 @@ use clap::Parser;
 use flute_benchmark::load_circuits;
 use gmw::parse::lut_circuit::{Circuit, Gate};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::{Path, PathBuf};
+use tracing::warn;
 use tracing_subscriber::filter::LevelFilter;
 use tracing_subscriber::EnvFilter;
 
@@ -34,6 +36,32 @@ struct Analysis {
     theoretical_setup_bits: u64,
     theoretical_online_bits: u64,
     theoretical_ots: u64,
+    // maps the input size to a map containing output sizes and a count for the respective
+    // input/output size tuple
+    lut_sizes: HashMap<u64, HashMap<u64, u64>>,
+    non_interactive_gates: HashMap<OtherGate, u64>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
+enum OtherGate {
+    Xor,
+    Xnor,
+    Not,
+    Assign,
+}
+
+impl TryFrom<&Gate> for OtherGate {
+    type Error = ();
+
+    fn try_from(value: &Gate) -> Result<Self, Self::Error> {
+        match value {
+            Gate::Lut(_) => Err(()),
+            Gate::Xor(_) => Ok(Self::Xor),
+            Gate::Xnor(_) => Ok(Self::Xnor),
+            Gate::Not(_) => Ok(Self::Not),
+            Gate::Assign(_) => Ok(Self::Assign),
+        }
+    }
 }
 
 fn main() -> anyhow::Result<()> {
@@ -73,23 +101,41 @@ fn main() -> anyhow::Result<()> {
 /// #OTs : 2 * (2^p - p - 1)
 fn analyze(file: PathBuf, circuit: Circuit) -> Analysis {
     let mut analysis = Analysis {
-        file,
-        theoretical_setup_bits: 0,
-        theoretical_online_bits: 0,
-        theoretical_ots: 0,
+        file: file.clone(),
+        ..Default::default()
     };
 
     // Iterate over all gates in a circuit.
     for gate in &circuit.gates {
-        // skip gates which are not a LUT
-        let Gate::Lut(lut) = gate else {
-            continue;
-        };
-        let p = lut.input_wires.len() as u64;
-        let q = lut.masked_luts.len() as u64;
-        analysis.theoretical_setup_bits += 4 * (2_u64.pow(p as u32) - p - 1);
-        analysis.theoretical_online_bits += 2 * q;
-        analysis.theoretical_ots += 2 * (2_u64.pow(p as u32) - p - 1);
+        match gate {
+            Gate::Lut(lut) => {
+                let p = lut.input_wires.len() as u64;
+                let q = lut.masked_luts.len() as u64;
+                analysis.theoretical_setup_bits += 4 * (2_u64.pow(p as u32) - p - 1);
+                analysis.theoretical_online_bits += 2 * q;
+                analysis.theoretical_ots += 2 * (2_u64.pow(p as u32) - p - 1);
+                *analysis
+                    .lut_sizes
+                    .entry(p)
+                    .or_default()
+                    .entry(q)
+                    .or_default() += 1;
+                if p > 8 {
+                    warn!(
+                        "Circuit at {} contains LUT with more tha 8 inputs. LUT {} {}",
+                        file.display(),
+                        p,
+                        q
+                    );
+                }
+            }
+            other @ (Gate::Xor(_) | Gate::Xnor(_) | Gate::Not(_) | Gate::Assign(_)) => {
+                *analysis
+                    .non_interactive_gates
+                    .entry(other.try_into().unwrap())
+                    .or_default() += 1;
+            }
+        }
 
         // The concrete LUTs can be accessed via
         // `lut.masked_luts` or iterated via `for masked_lut in &lut.masked_luts { // code }`
@@ -103,13 +149,13 @@ fn analyze(file: PathBuf, circuit: Circuit) -> Analysis {
 
 fn write_results(out_path: &Path, results: Vec<Analysis>) -> anyhow::Result<()> {
     let json_file = BufWriter::new(File::create(out_path.with_extension("json"))?);
-    serde_json::to_writer(json_file, &results).context("Writing results as json")?;
-    let csv_file = BufWriter::new(File::create(out_path.with_extension("csv"))?);
-    let mut csv_writer = csv::Writer::from_writer(csv_file);
-    for res in results {
-        csv_writer
-            .serialize(res)
-            .context("Writing results as csv")?;
-    }
+    serde_json::to_writer_pretty(json_file, &results).context("Writing results as json")?;
+    // let csv_file = BufWriter::new(File::create(out_path.with_extension("csv"))?);
+    // let mut csv_writer = csv::Writer::from_writer(csv_file);
+    // for res in results {
+    //     csv_writer
+    //         .serialize(res)
+    //         .context("Writing results as csv")?;
+    // }
     Ok(())
 }

@@ -1,21 +1,14 @@
+use bitvec::order::Lsb0;
+use bitvec::{bits, bitvec};
+use gmw::circuit::base_circuit::Load;
+use gmw::circuit::BaseCircuit;
 use gmw::common::BitVec;
 use gmw::executor::Executor;
-
-use bitvec::order::{Lsb0, Msb0};
-use bitvec::{bits, bitvec};
-use gmw::circuit::BaseCircuit;
 use gmw::mul_triple::insecure_provider::InsecureMTProvider;
-
+use gmw::parse::lut_circuit;
 use gmw::private_test_utils::init_tracing;
 use gmw::protocols::aby2_lut::{DeltaSharing, LutAby2, LutSetupProvider, ShareType};
-
 use gmw::protocols::ShareStorage;
-
-use rand::{thread_rng, Rng};
-
-use bitvec::field::BitField;
-use gmw::circuit::base_circuit::Load;
-use gmw::parse::lut_circuit;
 use std::path::Path;
 use tracing::{info, trace};
 
@@ -68,8 +61,8 @@ async fn eval_sample_lut() -> anyhow::Result<()> {
     let state2 = LutAby2::new(sharing_state2.clone());
 
     let (ch1, ch2) = mpc_channel::in_memory::new_pair(16);
-    let mut delta_provider1 = LutSetupProvider::new(0, InsecureMTProvider, ch1.0, ch1.1);
-    let mut delta_provider2 = LutSetupProvider::new(1, InsecureMTProvider, ch2.0, ch2.1);
+    let mut delta_provider1 = LutSetupProvider::new(0, InsecureMTProvider::default(), ch1.0, ch1.1);
+    let mut delta_provider2 = LutSetupProvider::new(1, InsecureMTProvider::default(), ch2.0, ch2.1);
 
     let (mut ex1, mut ex2): (Executor<LutAby2, usize>, Executor<LutAby2, usize>) =
         tokio::try_join!(

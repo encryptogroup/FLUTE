@@ -10,7 +10,7 @@ use std::time::Duration;
 use tokio::time::Instant;
 use tracing_subscriber::EnvFilter;
 use zappot::base_ot;
-use zappot::silent_ot::{Receiver, Sender};
+use zappot::silent_ot::{MultType, Receiver, Sender};
 use zappot::util::Block;
 
 #[derive(Parser, Debug, Clone)]
@@ -52,7 +52,9 @@ async fn sender(args: Args) -> (Vec<[Block; 2]>, usize, usize) {
         base_ot_sender,
         &mut rng,
         args.num_ots,
-        args.scaler,
+        MultType::QuasiCyclic {
+            scaler: args.scaler,
+        },
         args.threads,
         &mut ch_sender,
         &mut ch_receiver,
@@ -88,7 +90,9 @@ async fn receiver(args: Args) -> (Vec<Block>, BitVec) {
         base_ot_receiver,
         &mut rng,
         args.num_ots,
-        args.scaler,
+        MultType::QuasiCyclic {
+            scaler: args.scaler,
+        },
         args.threads,
         &mut ch_sender,
         &mut ch_receiver,

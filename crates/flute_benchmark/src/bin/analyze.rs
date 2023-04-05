@@ -3,7 +3,7 @@ use clap::Parser;
 use flute_benchmark::load_circuits;
 use gmw::parse::lut_circuit::{Circuit, Gate};
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::{Path, PathBuf};

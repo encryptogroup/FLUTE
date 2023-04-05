@@ -43,6 +43,16 @@ impl AesHash {
         }
         blocks
     }
+
+    pub fn cr_hash_slice_mut(&self, x: &mut [Block]) {
+        let mut encrypted = vec![Default::default(); x.len()];
+        self.aes
+            .encrypt_blocks_b2b(Block::cast_slice(x), &mut encrypted)
+            .unwrap();
+        x.iter_mut()
+            .zip(encrypted)
+            .for_each(|(x, x_enc)| *x ^= x_enc.into());
+    }
 }
 
 /// An `AesHash` with a fixed key.

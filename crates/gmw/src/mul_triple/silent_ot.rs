@@ -6,7 +6,9 @@ use rand::rngs::OsRng;
 use rand::SeedableRng;
 use rand_chacha::rand_core::{CryptoRng, RngCore};
 use rand_chacha::ChaChaRng;
+use std::thread::available_parallelism;
 use zappot::silent_ot;
+use zappot::silent_ot::MultType;
 
 pub type Msg = silent_ot::Msg;
 
@@ -25,15 +27,42 @@ impl<Rng: RngCore + CryptoRng + Send> SilentMtProvider<Rng> {
     /// ChaChaRng's.
     pub async fn new(
         num_ots: usize,
+        rng: Rng,
+        ch1: mpc_channel::Channel<silent_ot::Msg>,
+        ch2: mpc_channel::Channel<silent_ot::Msg>,
+    ) -> Self {
+        Self::new_with_mult_type(num_ots, MultType::Silver5, rng, ch1, ch2).await
+    }
+
+    pub async fn new_with_mult_type(
+        num_ots: usize,
+        mul_type: MultType,
         mut rng: Rng,
         mut ch1: mpc_channel::Channel<silent_ot::Msg>,
         mut ch2: mpc_channel::Channel<silent_ot::Msg>,
     ) -> Self {
         let mut rng1 = ChaChaRng::from_rng(&mut rng).expect("Seeding Rng in SilentMtProvider::new");
         let mut rng2 = ChaChaRng::from_rng(&mut rng).expect("Seeding Rng in SilentMtProvider::new");
+        let threads_per_ot = available_parallelism().map(usize::from).unwrap_or(2) / 2;
         let (silent_sender, silent_receiver) = tokio::join!(
-            silent_ot::Sender::new(&mut rng1, num_ots, &mut ch1.0, &mut ch1.1),
-            silent_ot::Receiver::new(&mut rng2, num_ots, &mut ch2.0, &mut ch2.1),
+            silent_ot::Sender::new_with_base_ot_sender(
+                zappot::base_ot::Sender::new(),
+                &mut rng1,
+                num_ots,
+                mul_type,
+                threads_per_ot,
+                &mut ch1.0,
+                &mut ch1.1
+            ),
+            silent_ot::Receiver::new_with_base_ot_receiver(
+                zappot::base_ot::Receiver::new(),
+                &mut rng2,
+                num_ots,
+                mul_type,
+                threads_per_ot,
+                &mut ch2.0,
+                &mut ch2.1
+            ),
         );
         Self {
             rng,
@@ -126,12 +155,12 @@ mod tests {
         let (ch11, ch21) = mpc_channel::in_memory::new_pair(128);
         let (ch12, ch22) = mpc_channel::in_memory::new_pair(128);
         let (mut mtp1, mut mtp2) = tokio::join!(
-            SilentMtProvider::new(10_000, OsRng, ch11, ch22),
-            SilentMtProvider::new(10_000, OsRng, ch12, ch21)
+            SilentMtProvider::new(10_000_000, OsRng, ch11, ch22),
+            SilentMtProvider::new(10_000_000, OsRng, ch12, ch21)
         );
 
         let (mts1, mts2) =
-            tokio::try_join!(mtp1.request_mts(8000), mtp2.request_mts(8000),).unwrap();
+            tokio::try_join!(mtp1.request_mts(1000), mtp2.request_mts(1000),).unwrap();
         let left = mts1.c ^ mts2.c;
         let right = (mts1.a ^ mts2.a) & (mts1.b ^ mts2.b);
         assert_eq!(left, right);

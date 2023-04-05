@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-silent_ot = ["bitpolymul", "aligned-vec"]
+silent_ot = ["bitpolymul", "aligned-vec", "libote-sys"]
 c_sse = []
 
 [dependencies]
@@ -15,8 +15,7 @@ async-trait = "0.1.53"
 aligned-vec = {path = "../aligned-vec", optional = true}
 bitpolymul = {path = "../bitpolymul", optional = true}
 bitvec = "1.0.0"
-byte-slice-cast = "1.2.1"
-bytemuck = { version = "1.9.1", features = ["derive"]}
+bytemuck = { version = "1.9.1", features = ["derive", "extern_crate_alloc"]}
 crossbeam-channel = "0.5.4"
 curve25519-dalek = { version = "4.0.0-pre.2", features = ["serde"]}
 futures = { version = "0.3.21", features = ["executor"]}
@@ -39,6 +38,7 @@ ndarray = { version = "0.15.4", features = ["rayon"]}
 thiserror = "1.0.31"
 tracing = "0.1.35"
 remoc = { path = "../../../remoc/remoc", default-features = false, features = ["rch", "codec-bincode"]}
+libote-sys = { path = "../../libs/libote-sys", optional = true }
 
 [dev-dependencies]
 criterion = { version = "0.3.5", features = ["async_tokio"]}

@@ -1,0 +1,9 @@
+[submodule "crates/zappot/libOTe"]
+	path = crates/zappot/libOTe
+	url = https://github.com/osu-crypto/libOTe.git
+[submodule "libs/coproto-sys/coproto"]
+	path = libs/coproto-sys/coproto
+	url = https://github.com/Visa-Research/coproto.git
+[submodule "libs/libote-sys/libOTe"]
+	path = libs/libote-sys/libOTe
+	url = git@github.com:robinhundt/libOTe.git

@@ -15,7 +15,7 @@ use std::ops::{Add, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssi
 use std::{array, mem};
 
 #[derive(Pod, Zeroable, Debug, Default, Clone, Copy, Serialize, Deserialize, Eq, PartialEq)]
-#[repr(transparent)]
+#[repr(C, align(16))]
 pub struct Block {
     data: u128,
 }
@@ -66,14 +66,13 @@ impl Block {
     /// Intended to pass Blocks directly to the [aes](https://docs.rs/aes/) encryption methods.
     #[cfg(feature = "silent_ot")]
     pub(crate) fn cast_slice_mut(slice: &mut [Block]) -> &mut [GenericArray<u8, U16>] {
-        // Safety: GenericArray<u8, U16> works like a [u8; 16]. Since Block is a repr(transparent)
+        // Safety: GenericArray<u8, U16> works like a [u8; 16]. Since Block is a repr(C)
         // struct with a u128 field, with an alignment greater than [u8; 16], the cast is legal.
         unsafe { &mut *(slice as *mut _ as *mut [GenericArray<u8, U16>]) }
     }
 
     /// Cast a slice of Blocks into a slice of `GenericArray<u8, U16>`. Intended to pass Blocks
     /// directly to the [aes](https://docs.rs/aes/) encryption methods.
-    #[cfg(feature = "silent_ot")]
     pub(crate) fn cast_slice(slice: &[Block]) -> &[GenericArray<u8, U16>] {
         // See cast_slice_mut
         unsafe { &*(slice as *const _ as *const [GenericArray<u8, U16>]) }

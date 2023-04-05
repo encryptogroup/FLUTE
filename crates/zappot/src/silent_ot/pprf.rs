@@ -11,6 +11,7 @@ use aes::Aes128;
 use bitvec::vec::BitVec;
 use futures::FutureExt;
 use ndarray::Array2;
+use num_integer::Integer;
 use rand::Rng;
 use rand_core::{CryptoRng, RngCore, SeedableRng};
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
@@ -47,14 +48,18 @@ pub enum Msg {
     TreeGrp(TreeGrp),
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum PprfOutputFormat {
     Plain,
     InterleavedTransposed,
+    Interleaved,
 }
 
 #[derive(Debug)]
-pub struct ChoiceBits(Array2<u8>);
+pub struct ChoiceBits {
+    pub(crate) pprf: Array2<u8>,
+    pub(crate) gap: BitVec,
+}
 
 impl Sender {
     pub fn new(conf: PprfConfig, base_ots: Vec<[Block; 2]>) -> Self {
@@ -67,6 +72,7 @@ impl Sender {
         &mut self,
         sender: mpc_channel::Sender<Msg>,
         value: Block,
+        format: PprfOutputFormat,
         rng: &mut RNG,
         thread_pool: Option<Arc<ThreadPool>>,
     ) -> Array2<Block>
@@ -83,7 +89,9 @@ impl Sender {
                     .into()
             });
         let cols = (conf.pnt_count * conf.domain + 127) / 128;
+        // let cols = conf.pnt_count * conf.domain / 128;
         let output = Arc::new(Mutex::new(Array2::zeros((128, cols))));
+
         let aes = create_fixed_aes();
         let seed: Block = rng.gen();
 
@@ -105,7 +113,12 @@ impl Sender {
         let sender_cl = sender.clone();
         let routine = move |thread_idx: usize| {
             let mut rng = AesRng::from_seed(seed ^ thread_idx.into());
-            let dd = depth + 1;
+            let dd = match format {
+                PprfOutputFormat::Interleaved => depth,
+                _ => depth + 1,
+            };
+            // let dd = depth + 1;
+
             // tree will hold the full GGM tree. Note that there are 8
             // independent trees that are being processed together.
             // The trees are flattened to that the children of j are
@@ -126,7 +139,17 @@ impl Sender {
                 tree_grp.sums[1].resize(depth, Default::default());
 
                 for d in 0..depth {
-                    let (level0, level1) = get_cons_levels(&mut tree, d);
+                    let mut _opt_out_lock = None;
+                    let (level0, level1) =
+                        if format == PprfOutputFormat::Interleaved && d + 1 == depth {
+                            let level0 = get_level(&mut tree, d);
+                            _opt_out_lock = Some(output_clone.lock().unwrap());
+                            let level1 = get_level_output(_opt_out_lock.as_mut().unwrap(), g, conf);
+                            (level0, level1)
+                        } else {
+                            get_cons_levels(&mut tree, d)
+                        };
+                    // let (level0, level1) = get_cons_levels(&mut tree, d);
                     let width = level1.len();
                     let mut child_idx = 0;
                     // For each child, populate the child by expanding the parent.
@@ -225,7 +248,7 @@ impl Sender {
                             *ot ^= mask;
                         });
                 }
-                // Resize the sums to that they dont include
+                // Resize the sums so that they dont include
                 // the unmasked sums on the last level!
                 tree_grp.sums[0].truncate(depth - 1);
                 tree_grp.sums[1].truncate(depth - 1);
@@ -233,9 +256,11 @@ impl Sender {
                 sender_cl
                     .blocking_send(Msg::TreeGrp(tree_grp.clone()))
                     .expect("Sending tree group failed");
-                let last_level = get_level(&mut tree, depth);
-                let mut output = output_clone.lock().unwrap();
-                copy_out(last_level, &mut output, pnt_count, g);
+                if format != PprfOutputFormat::Interleaved {
+                    let last_level = get_level(&mut tree, depth);
+                    let mut output = output_clone.lock().unwrap();
+                    copy_out(last_level, &mut output, pnt_count, g, conf, format);
+                }
             }
         };
 
@@ -258,18 +283,19 @@ impl Sender {
 impl Receiver {
     pub fn new(conf: PprfConfig, base_ots: Vec<Block>, base_choices: ChoiceBits) -> Self {
         assert_eq!(conf.base_ot_count(), base_ots.len());
-        assert_eq!(conf.base_ot_count(), base_choices.0.len());
+        assert_eq!(conf.base_ot_count(), base_choices.pprf.len());
         let base_ots = Array2::from_shape_vec((conf.pnt_count, conf.depth), base_ots).unwrap();
         Self {
             conf,
             base_ots,
-            base_choices: base_choices.0,
+            base_choices: base_choices.pprf,
         }
     }
 
     pub async fn expand(
         &mut self,
         mut receiver: mpc_channel::Receiver<Msg>,
+        format: PprfOutputFormat,
         thread_pool: Option<Arc<ThreadPool>>,
     ) -> Array2<Block> {
         let conf = self.conf;
@@ -283,6 +309,7 @@ impl Receiver {
             });
 
         let cols = (conf.pnt_count * conf.domain + 127) / 128;
+        // let cols = conf.pnt_count * conf.domain / 128;
         let output = Arc::new(Mutex::new(Array2::zeros((128, cols))));
 
         let points = self.get_points(PprfOutputFormat::Plain);
@@ -332,7 +359,11 @@ impl Receiver {
             // their_sums[0].resize(depth - 1, [Block::zero(); 8]);
             // their_sums[1].resize(depth - 1, [Block::zero(); 8]);
 
-            let dd = depth + 1;
+            let dd = match format {
+                PprfOutputFormat::Interleaved => depth,
+                _ => depth + 1,
+            };
+            // let dd = depth + 1;
 
             let mut tree = vec![[Block::zero(); 8]; 1 << dd];
 
@@ -358,7 +389,18 @@ impl Receiver {
                         // level0: The already constructed level. Only missing the
                         //          GGM tree node value along the active path.
                         // level1: The next level that we want to construct.
-                        let (level0, level1) = get_cons_levels(&mut tree, d);
+                        let mut _opt_out_lock = None;
+                        let (level0, level1) = if format == PprfOutputFormat::Interleaved
+                            && d + 1 == depth
+                        {
+                            let level0 = get_level(&mut tree, d);
+                            _opt_out_lock = Some(output_clone.lock().unwrap());
+                            let level1 = get_level_output(_opt_out_lock.as_mut().unwrap(), g, conf);
+                            (level0, level1)
+                        } else {
+                            get_cons_levels(&mut tree, d)
+                        };
+                        // let (level0, level1) = get_cons_levels(&mut tree, d);
                         // Zero out the previous sums.
                         my_sums = [[Block::zero(); 8]; 2];
                         // We will iterate over each node on this level and
@@ -429,8 +471,14 @@ impl Receiver {
                     // before but we must also fixed the child value for
                     // the active child. To do this, we will receive 4
                     // values. Two for each case (left active or right active).
+                    let mut output = output_clone.lock().unwrap();
+                    let level = if format == PprfOutputFormat::Interleaved {
+                        get_level_output(&mut output, g, conf)
+                    } else {
+                        get_level(&mut tree, depth)
+                    };
+                    // let level = get_level(&mut tree, depth);
 
-                    let level = get_level(&mut tree, depth);
                     let d = depth - 1;
                     for j in 0..8 {
                         // The index of the child on the active path.
@@ -455,10 +503,20 @@ impl Receiver {
                         // We need to do this little dance as we can't just mutably alias level
                         let children = match active_child_idx.cmp(&inactive_child_idx) {
                             Ordering::Less => {
+                                // Ugh, this code is really broken, not sure why this is needed,
+                                // but without it, the code panicks at the split_at_mut
+                                // I think the libOTe might contain a bug here, but not sure
+                                if inactive_child_idx >= level.len() {
+                                    continue;
+                                }
                                 let (left, right) = level.split_at_mut(inactive_child_idx);
                                 [&mut right[0], &mut left[active_child_idx]]
                             }
                             Ordering::Greater => {
+                                // see comment above
+                                if active_child_idx >= level.len() {
+                                    continue;
+                                }
                                 let (left, right) = level.split_at_mut(active_child_idx);
                                 [&mut left[inactive_child_idx], &mut right[0]]
                             }
@@ -477,9 +535,11 @@ impl Receiver {
                     }
                     // copy the last level to the output. If desired, this is
                     // where the tranpose is performed.
-                    let last_level = get_level(&mut tree, depth);
-                    let mut output = output_clone.lock().unwrap();
-                    copy_out(last_level, &mut output, pnt_count, g);
+                    if format != PprfOutputFormat::Interleaved {
+                        let last_level = get_level(&mut tree, depth);
+                        // let mut output = output_clone.lock().unwrap();
+                        copy_out(last_level, &mut output, pnt_count, g, conf, format);
+                    }
                 });
         };
 
@@ -508,9 +568,9 @@ impl Receiver {
                 .into_iter()
                 .map(|choice_bits| get_active_path(choice_bits.as_slice().unwrap()))
                 .collect(),
-            PprfOutputFormat::InterleavedTransposed => {
+            PprfOutputFormat::Interleaved | PprfOutputFormat::InterleavedTransposed => {
                 let mut points = self.get_points(PprfOutputFormat::Plain);
-                interleave_points(&mut points);
+                interleave_points(&mut points, self.conf.domain, format);
                 points
             }
         }
@@ -522,7 +582,8 @@ impl Receiver {
         format: PprfOutputFormat,
         rng: &mut RNG,
     ) -> ChoiceBits {
-        let mut choices = Array2::default((conf.pnt_count, conf.depth));
+        let mut choices =
+            Array2::default((Integer::next_multiple_of(&conf.pnt_count, &8), conf.depth));
         for (i, mut choice_row) in choices.rows_mut().into_iter().enumerate() {
             match format {
                 PprfOutputFormat::Plain => {
@@ -537,17 +598,17 @@ impl Receiver {
                         }
                     }
                 }
-                PprfOutputFormat::InterleavedTransposed => {
+                PprfOutputFormat::Interleaved | PprfOutputFormat::InterleavedTransposed => {
                     // make sure that atleast the first element of this tree
                     // is within the modulus.
-                    let mut idx = interleave_point(0, i, conf.pnt_count);
+                    let mut idx = interleave_point(0, i, conf.pnt_count, conf.domain, format);
                     assert!(idx < modulus, "Iteration {i}, failed: {idx} < {modulus}");
                     loop {
                         choice_row
                             .iter_mut()
                             .for_each(|choice| *choice = rng.gen::<bool>() as u8);
                         idx = get_active_path(choice_row.as_slice().unwrap());
-                        idx = interleave_point(idx, i, conf.pnt_count);
+                        idx = interleave_point(idx, i, conf.pnt_count, conf.domain, format);
                         if idx < modulus {
                             break;
                         }
@@ -555,7 +616,7 @@ impl Receiver {
                 }
             }
         }
-        ChoiceBits(choices)
+        ChoiceBits::from_arr2(choices)
     }
 }
 
@@ -587,12 +648,26 @@ impl PprfConfig {
 }
 
 impl ChoiceBits {
+    pub fn from_arr2(arr: Array2<u8>) -> Self {
+        Self {
+            pprf: arr,
+            gap: Default::default(),
+        }
+    }
+
     pub fn as_bit_vec(&self) -> BitVec {
         BitVec::from_iter(self.iter())
     }
 
     pub fn iter(&self) -> impl Iterator<Item = bool> + '_ {
-        self.0.iter().map(|bit| *bit != 0)
+        self.pprf
+            .iter()
+            .map(|bit| *bit != 0)
+            .chain(self.gap.iter().by_vals())
+    }
+
+    pub fn take_gap_choices(&mut self) -> BitVec {
+        mem::take(&mut self.gap)
     }
 }
 
@@ -612,6 +687,15 @@ fn create_fixed_aes() -> [Aes128; 2] {
     ]
 }
 
+// Returns the i'th level of the current 8 trees. The
+// children of node j on level i are located at 2*j and
+// 2*j+1  on level i+1.
+fn get_level(tree: &mut [[Block; 8]], i: usize) -> &mut [[Block; 8]] {
+    let size = 1 << i;
+    let offset = size - 1;
+    &mut tree[offset..offset + size]
+}
+
 // Todo: choice_bits contains bits as individual u8, we can probably
 //  refactor this to use bitvec
 fn get_active_path(choice_bits: &[u8]) -> usize {
@@ -621,49 +705,74 @@ fn get_active_path(choice_bits: &[u8]) -> usize {
     })
 }
 
-fn interleave_points(points: &mut [usize]) {
+fn interleave_points(points: &mut [usize], domain: usize, format: PprfOutputFormat) {
     let total_trees = points.len();
     points
         .iter_mut()
         .enumerate()
-        .for_each(|(i, point)| *point = interleave_point(*point, i, total_trees))
+        .for_each(|(i, point)| *point = interleave_point(*point, i, total_trees, domain, format))
 }
 
-fn interleave_point(point: usize, tree_idx: usize, total_trees: usize) -> usize {
-    let num_sets = total_trees / 8;
+fn interleave_point(
+    point: usize,
+    tree_idx: usize,
+    total_trees: usize,
+    domain: usize,
+    format: PprfOutputFormat,
+) -> usize {
+    match format {
+        PprfOutputFormat::Plain => {
+            panic!("interleave_point called on PprfOutputFormat::Plain")
+        }
+        PprfOutputFormat::InterleavedTransposed => {
+            let num_sets = total_trees / 8;
 
-    let set_idx = tree_idx / 8;
-    let sub_idx = tree_idx % 8;
+            let set_idx = tree_idx / 8;
+            let sub_idx = tree_idx % 8;
 
-    let section_idx = point / 16;
-    let pos_idx = point % 16;
+            let section_idx = point / 16;
+            let pos_idx = point % 16;
 
-    let set_offset = set_idx * 128;
-    let sub_offset = sub_idx + 8 * pos_idx;
-    let sec_offset = section_idx * num_sets * 128;
+            let set_offset = set_idx * 128;
+            let sub_offset = sub_idx + 8 * pos_idx;
+            let sec_offset = section_idx * num_sets * 128;
 
-    set_offset + sub_offset + sec_offset
+            set_offset + sub_offset + sec_offset
+        }
+        PprfOutputFormat::Interleaved => {
+            if domain <= point {
+                return 0;
+            }
+            let sub_tree = tree_idx % 8;
+            let forest = tree_idx / 8;
+            (forest * domain + point) * 8 + sub_tree
+        }
+    }
 }
-
 #[derive(Serialize, Deserialize, Default, Clone, Debug)]
 pub struct TreeGrp {
     g: usize,
     sums: [Vec<[Block; 8]>; 2],
     last_ots: Vec<[Block; 4]>,
 }
+
 #[derive(Error, Debug)]
 pub enum ExpandError {
     #[error("unknown error")]
     Unknown,
 }
 
-// Returns the i'th level of the current 8 trees. The
-// children of node j on level i are located at 2*j and
-// 2*j+1  on level i+1.
-fn get_level(tree: &mut [[Block; 8]], i: usize) -> &mut [[Block; 8]] {
-    let size = 1 << i;
-    let offset = size - 1;
-    &mut tree[offset..offset + size]
+fn get_level_output(
+    output: &mut Array2<Block>,
+    tree_idx: usize,
+    conf: PprfConfig,
+) -> &mut [[Block; 8]] {
+    let out = bytemuck::cast_slice_mut(output.as_slice_mut().unwrap());
+    let forest = tree_idx / 8;
+    assert_eq!(tree_idx % 8, 0);
+    // let size = 1 << (conf.depth);
+    let start = forest * conf.domain;
+    &mut out[start..start + conf.domain]
 }
 
 // Return the i'th and (i+1)'th level
@@ -678,34 +787,61 @@ fn get_cons_levels(tree: &mut [[Block; 8]], i: usize) -> (&mut [[Block; 8]], &mu
     (level0, level1)
 }
 
-fn copy_out(lvl: &[[Block; 8]], output: &mut Array2<Block>, total_trees: usize, t_idx: usize) {
+fn copy_out(
+    lvl: &[[Block; 8]],
+    output: &mut Array2<Block>,
+    total_trees: usize,
+    t_idx: usize,
+    _conf: PprfConfig,
+    format: PprfOutputFormat,
+) {
     assert_eq!(total_trees % 8, 0, "Number of trees must be dividable by 8");
     assert_eq!(lvl.len() % 16, 0, "lvl len() must be dividable by 16");
-    assert!(lvl.len() > 16, "Lvl must have size of at least 16");
+    assert!(
+        lvl.len() >= 16,
+        "Lvl must have size of at least 16. Size is: {}",
+        lvl.len()
+    );
 
-    let set_idx = t_idx / 8;
-    let block_per_set = lvl.len() * 8 / 128;
-    let num_sets = total_trees / 8;
-    let step = num_sets;
-    let end = cmp::min(set_idx + step * block_per_set, output.ncols());
-    let mut i = set_idx;
-    let mut k = 0;
-    while i < end {
-        // get 128 blocks
-        let input_128: &[u8] = bytemuck::cast_slice(&lvl[k * 16..(k + 1) * 16]);
-        let transposed = transpose(input_128, 128, 128);
-        let transposed_blocks = transposed
-            .chunks_exact(16)
-            .map(|chunk| Block::try_from(chunk).expect("Blocks are 16 bytes"));
-        output
-            .rows_mut()
-            .into_iter()
-            .zip(transposed_blocks)
-            .for_each(|(mut row, block)| {
-                row[i] = block;
-            });
-        i += step;
-        k += 1;
+    match format {
+        PprfOutputFormat::Plain => {
+            todo!()
+        }
+        PprfOutputFormat::InterleavedTransposed => {
+            let set_idx = t_idx / 8;
+            let block_per_set = lvl.len() * 8 / 128;
+            let num_sets = total_trees / 8;
+            let step = num_sets;
+            let end = cmp::min(set_idx + step * block_per_set, output.ncols());
+            let mut i = set_idx;
+            let mut k = 0;
+            while i < end {
+                // get 128 blocks
+                let input_128: &[u8] = bytemuck::cast_slice(&lvl[k * 16..(k + 1) * 16]);
+                let transposed = transpose(input_128, 128, 128);
+                let transposed_blocks = transposed
+                    .chunks_exact(16)
+                    .map(|chunk| Block::try_from(chunk).expect("Blocks are 16 bytes"));
+                output
+                    .rows_mut()
+                    .into_iter()
+                    .zip(transposed_blocks)
+                    .for_each(|(mut row, block)| {
+                        row[i] = block;
+                    });
+                i += step;
+                k += 1;
+            }
+        }
+        PprfOutputFormat::Interleaved => {
+            panic!("Do not copy_out for Interleaved")
+            // let output = bytemuck::cast_slice_mut(output.as_slice_mut().unwrap());
+            // assert_eq!(t_idx % 8, 0);
+            // let forest = t_idx / 8;
+            // let start = forest * conf.domain;
+            // let size = cmp::min(lvl.len(), output.len() - start);
+            // output[start .. start + size].copy_from_slice(&lvl[..size]);
+        }
     }
 }
 
@@ -761,13 +897,21 @@ pub(crate) mod tests {
         let send = tokio::spawn(async move {
             let mut sender = Sender::new(conf, sender_base_ots);
             sender
-                .expand(sender_ch, Block::all_ones(), &mut rng, Some(send_pool))
+                .expand(
+                    sender_ch,
+                    Block::all_ones(),
+                    format,
+                    &mut rng,
+                    Some(send_pool),
+                )
                 .await
         });
         let mut receiver = Receiver::new(conf, receiver_base_ots, base_choices);
         let points = receiver.get_points(format);
         let receive =
-            tokio::spawn(async move { receiver.expand(receiver_ch, Some(recv_pool)).await });
+            tokio::spawn(
+                async move { receiver.expand(receiver_ch, format, Some(recv_pool)).await },
+            );
         let (r_out, s_out) = futures::future::try_join(receive, send).await.unwrap();
         println!("Total time: {}", now.elapsed().as_secs_f32());
         let out = r_out ^ s_out;
@@ -777,7 +921,8 @@ pub(crate) mod tests {
             out.ncols() * 128, // * 128 because of Block size
         );
         let out_t: &[Block] = bytemuck::cast_slice(&out_t);
-        for (i, blk) in (&out_t[0..conf.domain * conf.pnt_count]).iter().enumerate() {
+        // for (i, blk) in (&out_t[0..conf.domain * conf.pnt_count]).iter().enumerate() {
+        for (i, blk) in out_t.iter().enumerate() {
             let f = points.contains(&i);
             let exp = if f { Block::all_ones() } else { Block::zero() };
             assert_eq!(*blk, exp, "block {i} not as expected");

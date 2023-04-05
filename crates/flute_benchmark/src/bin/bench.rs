@@ -1,5 +1,6 @@
+use anyhow::Context;
 use chrono::Local;
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 use flute_benchmark::load_circuits;
 use gmw::circuit::base_circuit::Load;
 use gmw::circuit::BaseCircuit;
@@ -26,6 +27,7 @@ use std::process::Command;
 use std::time::Instant;
 use tracing::info;
 use tracing_subscriber::EnvFilter;
+use zappot::silent_ot::MultType;
 
 #[derive(Parser)]
 struct Args {
@@ -52,15 +54,43 @@ struct Args {
     depth: Option<usize>,
     #[arg(long, default_value_t = 2_000_000)]
     ots: usize,
-    #[arg(long, default_value = "lan")]
-    net: String,
+    #[arg(long, value_enum, default_value_t = NetSetting::None)]
+    net: NetSetting,
+    #[arg(long, value_enum, default_value_t = SilentEncoding::QuasiCyclic)]
+    encoding: SilentEncoding,
+}
+
+#[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, ValueEnum)]
+enum SilentEncoding {
+    QuasiCyclic,
+    Silver5,
+    Silver11,
+}
+
+#[derive(Copy, Clone, Debug, Default, Ord, PartialOrd, Eq, PartialEq, Serialize, Deserialize, ValueEnum)]
+enum NetSetting {
+    #[default]
+    None,
+    Lan,
+    Wan,
+}
+
+
+impl From<SilentEncoding> for MultType {
+    fn from(value: SilentEncoding) -> Self {
+        match value {
+            SilentEncoding::QuasiCyclic => MultType::QuasiCyclic { scaler: 2 },
+            SilentEncoding::Silver5 => MultType::Silver5,
+            SilentEncoding::Silver11 => MultType::Silver11,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 struct BenchResult {
     file: PathBuf,
     repeat: usize,
-    network_setting: String,
+    network_setting: NetSetting,
     ots_generated: usize,
     ots_used: usize,
     comm_base_ots: usize,
@@ -118,7 +148,8 @@ async fn main() -> anyhow::Result<()> {
         _ => unreachable!("Checked by args parser"),
     };
 
-    configure_net(&args.net)?;
+    configure_net(args.net)
+        .context("Failed to configure network setting. Consider using --net none")?;
 
     let lut_circuits = load_circuits(
         &args.circuits,
@@ -185,7 +216,7 @@ async fn main() -> anyhow::Result<()> {
             res = BenchResult::default();
             res.batch_size = batch_size;
             res.repeat = args.repeat;
-            res.network_setting = args.net.clone();
+            res.network_setting = args.net;
             res.file = circ_path.clone();
             if let Some(plain_circuit) = plain_circuit {
                 calc_theoretical_numbers(&mut res, &plain_circuit, batch_size as u64);
@@ -208,9 +239,23 @@ async fn main() -> anyhow::Result<()> {
                 let ots_per_party = args.ots;
                 let mut mtp = record!(time_base_ots_ms, comm_base_ots, {
                     if args.id == 0 {
-                        SilentMtProvider::new(ots_per_party, OsRng, ot_ch1, ot_ch2).await
+                        SilentMtProvider::new_with_mult_type(
+                            ots_per_party,
+                            args.encoding.into(),
+                            OsRng,
+                            ot_ch1,
+                            ot_ch2,
+                        )
+                        .await
                     } else {
-                        SilentMtProvider::new(ots_per_party, OsRng, ot_ch2, ot_ch1).await
+                        SilentMtProvider::new_with_mult_type(
+                            ots_per_party,
+                            args.encoding.into(),
+                            OsRng,
+                            ot_ch2,
+                            ot_ch1,
+                        )
+                        .await
                     }
                 });
                 // times two because both parties generate this amount
@@ -370,12 +415,11 @@ fn write_results(args: &Args, results: &[BenchResult]) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn configure_net(net_setting: &str) -> anyhow::Result<()> {
+fn configure_net(net_setting: NetSetting) -> anyhow::Result<()> {
     let mut child = match net_setting {
-        "lan" => Command::new("sudo").arg("tc_lan10").spawn()?,
-        "wan" => Command::new("sudo").arg("tc_wan").spawn()?,
-        "none" => return Ok(()),
-        other => anyhow::bail!("unsupported network setting: {}", other),
+        NetSetting::Lan => Command::new("sudo").arg("tc_lan10").spawn()?,
+        NetSetting::Wan => Command::new("sudo").arg("tc_wan").spawn()?,
+        NetSetting::None => return Ok(()),
     };
     child.wait()?;
     Ok(())

@@ -3,6 +3,7 @@ use gmw::circuit::DefaultIdx;
 
 use gmw::common::BitVec;
 use gmw::private_test_utils::{execute_circuit, init_tracing, TestChannel};
+use gmw::protocols::boolean_gmw::BooleanGmw;
 use gmw::share_wrapper::{inputs, low_depth_reduce};
 use gmw::{BooleanGate, Circuit, CircuitBuilder};
 
@@ -11,7 +12,7 @@ async fn and_tree() -> Result<()> {
     // TODO assert depth
     let _guard = init_tracing();
     let input_count = 23;
-    let inputs = inputs::<DefaultIdx>(input_count);
+    let inputs = inputs::<BooleanGmw, DefaultIdx>(input_count);
     low_depth_reduce(inputs, std::ops::BitAnd::bitand)
         .unwrap()
         .output();

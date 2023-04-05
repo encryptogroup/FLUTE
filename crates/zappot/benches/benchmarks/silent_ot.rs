@@ -5,7 +5,7 @@ use criterion::{criterion_group, BenchmarkId, Criterion};
 use rand::thread_rng;
 use rand_core::RngCore;
 use zappot::silent_ot;
-use zappot::silent_ot::bit_shift_xor;
+use zappot::silent_ot::quasi_cyclic_encode::bit_shift_xor;
 
 use zappot::util::Block;
 

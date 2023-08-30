@@ -1,4 +1,4 @@
-use anyhow::Context;
+use anyhow::{anyhow, Context};
 use chrono::Local;
 use clap::{Parser, ValueEnum};
 use flute_benchmark::load_circuits;
@@ -67,7 +67,9 @@ enum SilentEncoding {
     Silver11,
 }
 
-#[derive(Copy, Clone, Debug, Default, Ord, PartialOrd, Eq, PartialEq, Serialize, Deserialize, ValueEnum)]
+#[derive(
+    Copy, Clone, Debug, Default, Ord, PartialOrd, Eq, PartialEq, Serialize, Deserialize, ValueEnum,
+)]
 enum NetSetting {
     #[default]
     None,
@@ -75,13 +77,20 @@ enum NetSetting {
     Wan,
 }
 
+impl TryFrom<SilentEncoding> for MultType {
+    type Error = anyhow::Error;
 
-impl From<SilentEncoding> for MultType {
-    fn from(value: SilentEncoding) -> Self {
+    fn try_from(value: SilentEncoding) -> Result<Self, Self::Error> {
         match value {
-            SilentEncoding::QuasiCyclic => MultType::QuasiCyclic { scaler: 2 },
-            SilentEncoding::Silver5 => MultType::Silver5,
-            SilentEncoding::Silver11 => MultType::Silver11,
+            SilentEncoding::QuasiCyclic => Ok(MultType::QuasiCyclic { scaler: 2 }),
+            #[cfg(feature = "silent_ot_silver")]
+            SilentEncoding::Silver5 => Ok(MultType::Silver5),
+            #[cfg(feature = "silent_ot_silver")]
+            SilentEncoding::Silver11 => Ok(MultType::Silver11),
+            #[cfg(not(feature = "silent_ot_silver"))]
+            _silver_unsupported => Err(anyhow!(
+                "Silver is only supported with crate feature 'silent_ot_silver'"
+            )),
         }
     }
 }
@@ -135,6 +144,7 @@ async fn main() -> anyhow::Result<()> {
         .init();
 
     let mut args = Args::parse();
+    let silver_mult_type = args.encoding.try_into()?;
     if let None = &args.out {
         args.out = Some(PathBuf::from(format!(
             "bench_results_{}",
@@ -241,7 +251,7 @@ async fn main() -> anyhow::Result<()> {
                     if args.id == 0 {
                         SilentMtProvider::new_with_mult_type(
                             ots_per_party,
-                            args.encoding.into(),
+                            silver_mult_type,
                             OsRng,
                             ot_ch1,
                             ot_ch2,
@@ -250,7 +260,7 @@ async fn main() -> anyhow::Result<()> {
                     } else {
                         SilentMtProvider::new_with_mult_type(
                             ots_per_party,
-                            args.encoding.into(),
+                            silver_mult_type,
                             OsRng,
                             ot_ch2,
                             ot_ch1,

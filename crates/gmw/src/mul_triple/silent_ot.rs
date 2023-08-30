@@ -25,6 +25,7 @@ pub struct SilentMtProvider<Rng> {
 impl<Rng: RngCore + CryptoRng + Send> SilentMtProvider<Rng> {
     /// Executes base OTs for silent OT but not num_ots silentOT itself. `Rng` is used to seed
     /// ChaChaRng's.
+    #[cfg(feature = "silent_ot_silver")]
     pub async fn new(
         num_ots: usize,
         rng: Rng,

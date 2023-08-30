@@ -22,6 +22,7 @@ use rand::Rng;
 use rand_core::{CryptoRng, RngCore};
 
 use crate::silent_ot::quasi_cyclic_encode::QuasiCyclicEncoder;
+#[cfg(feature = "silent_ot_silver")]
 use crate::silent_ot::silver_encode::{SilverConf, SilverEncoder};
 use aes::cipher::{BlockEncrypt, KeyInit};
 use aes::Aes128;
@@ -38,6 +39,7 @@ use std::thread::available_parallelism;
 
 pub mod pprf;
 pub mod quasi_cyclic_encode;
+#[cfg(feature = "silent_ot_silver")]
 pub mod silver_encode;
 
 /// The chosen security parameter of 128 bits.
@@ -69,13 +71,16 @@ pub struct Receiver {
 #[derive(Debug)]
 pub enum Encoder {
     QuasiCyclic(QuasiCyclicEncoder),
+    #[cfg(feature = "silent_ot_silver")]
     Silver(SilverEncoder),
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum MultType {
     QuasiCyclic { scaler: usize },
+    #[cfg(feature = "silent_ot_silver")]
     Silver5,
+    #[cfg(feature = "silent_ot_silver")]
     Silver11,
 }
 
@@ -510,12 +515,14 @@ impl Encoder {
             MultType::QuasiCyclic { scaler } => Encoder::QuasiCyclic(QuasiCyclicEncoder {
                 conf: QuasiCyclicConf::configure(num_ots, scaler, sec_param),
             }),
+            #[cfg(feature = "silent_ot_silver")]
             MultType::Silver5 => {
                 let conf = SilverConf::configure(num_ots, 5, sec_param);
                 let enc =
                     libote_sys::SilverEncoder::new(libote_sys::SilverCode::Weight5, conf.N as u64);
                 Encoder::Silver(SilverEncoder { enc, conf })
             }
+            #[cfg(feature = "silent_ot_silver")]
             MultType::Silver11 => {
                 let conf = SilverConf::configure(num_ots, 11, sec_param);
                 let enc =
@@ -528,6 +535,7 @@ impl Encoder {
     fn dual_encode(&mut self, rT: ArrayOrVec) -> Vec<Block> {
         match (self, rT) {
             (Encoder::QuasiCyclic(enc), ArrayOrVec::Array(rT)) => enc.dual_encode(rT),
+            #[cfg(feature = "silent_ot_silver")]
             (Encoder::Silver(enc), ArrayOrVec::Vec(mut c)) => {
                 {
                     let c = bytemuck::cast_slice_mut(&mut c);
@@ -565,6 +573,7 @@ impl Encoder {
                 };
                 enc.dual_encode2(rT, sb_blocks, choice_bit_packing)
             }
+            #[cfg(feature = "silent_ot_silver")]
             (Encoder::Silver(enc), ArrayOrVec::Vec(mut c)) => {
                 if choice_bit_packing.packed() {
                     let mask = Block::one() ^ Block::all_ones();
@@ -596,6 +605,7 @@ impl Encoder {
         let pprf_conf = self.pprf_conf();
         match self {
             Encoder::QuasiCyclic(_) => pprf_conf.base_ot_count(),
+            #[cfg(feature = "silent_ot_silver")]
             Encoder::Silver(enc) => pprf_conf.base_ot_count() + enc.conf.gap,
         }
     }
@@ -603,6 +613,7 @@ impl Encoder {
     fn gap(&self) -> usize {
         match self {
             Encoder::QuasiCyclic(_) => 0,
+            #[cfg(feature = "silent_ot_silver")]
             Encoder::Silver(enc) => enc.conf.gap,
         }
     }
@@ -610,6 +621,7 @@ impl Encoder {
     fn pprf_conf(&self) -> PprfConfig {
         match self {
             Encoder::QuasiCyclic(enc) => enc.conf.into(),
+            #[cfg(feature = "silent_ot_silver")]
             Encoder::Silver(enc) => enc.conf.into(),
         }
     }
@@ -617,6 +629,7 @@ impl Encoder {
     fn pprf_format(&self) -> PprfOutputFormat {
         match self {
             Encoder::QuasiCyclic(_) => PprfOutputFormat::InterleavedTransposed,
+            #[cfg(feature = "silent_ot_silver")]
             Encoder::Silver(_) => PprfOutputFormat::Interleaved,
         }
     }
@@ -625,6 +638,7 @@ impl Encoder {
     fn requested_num_ots(&self) -> usize {
         match self {
             Encoder::QuasiCyclic(enc) => enc.conf.requested_num_ots,
+            #[cfg(feature = "silent_ot_silver")]
             Encoder::Silver(enc) => enc.conf.requested_num_ots,
         }
     }
@@ -632,6 +646,7 @@ impl Encoder {
     fn N2(&self) -> usize {
         match self {
             Encoder::QuasiCyclic(enc) => enc.conf.N2,
+            #[cfg(feature = "silent_ot_silver")]
             Encoder::Silver(enc) => enc.conf.N2,
         }
     }
@@ -639,6 +654,7 @@ impl Encoder {
     fn num_partitions(&self) -> usize {
         match self {
             Encoder::QuasiCyclic(enc) => enc.conf.num_partitions,
+            #[cfg(feature = "silent_ot_silver")]
             Encoder::Silver(enc) => enc.conf.num_partitions,
         }
     }
@@ -646,6 +662,7 @@ impl Encoder {
     fn size_per(&self) -> usize {
         match self {
             Encoder::QuasiCyclic(enc) => enc.conf.size_per,
+            #[cfg(feature = "silent_ot_silver")]
             Encoder::Silver(enc) => enc.conf.size_per,
         }
     }
@@ -886,6 +903,7 @@ mod test {
         check_random(&s_out, &r_out.0, &r_out.1);
     }
 
+    #[cfg(feature = "silent_ot_silver")]
     #[tokio::test(flavor = "multi_thread")]
     async fn random_silent_ot_silver() {
         let num_ots = 10000;

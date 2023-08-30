@@ -6,7 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-silent_ot = ["bitpolymul", "aligned-vec", "libote-sys"]
+silent_ot = ["bitpolymul", "aligned-vec"]
+# this feature needs libote-sys which provides bindings to libOTe
+# but since gcc seems to not care about backwards compat, this is prone to break...
+silent_ot_silver = ["libote-sys"]
 c_sse = []
 
 [dependencies]

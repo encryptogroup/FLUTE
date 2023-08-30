@@ -40,3 +40,8 @@ and in another terminal
 ```shell
  RUST_LOG=info ./target/release/bench --id 1 --circuits crates/flute_benchmark/to_eval/sbox8.lut --net none
 ```
+
+You will likely see error relating to the `Baseline` directory. If you wish to benchmark the baseline circuits as well, the easiest way is to execute the `bench` binary while inside `crates/flute_benchmark/`. Then the default paths to the baseline circuits are correct.
+
+## Silver support
+Due to breaking changes [in gcc-13](https://gcc.gnu.org/gcc-13/porting_to.html), support for the silver encoding of Silent-OT is currently broken and disabled by default.

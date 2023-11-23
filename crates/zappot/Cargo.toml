@@ -40,7 +40,7 @@ tokio-util = { version = "0.7.3", features = ["codec"]}
 ndarray = { version = "0.15.4", features = ["rayon"]}
 thiserror = "1.0.31"
 tracing = "0.1.35"
-remoc = { path = "../../../remoc/remoc", default-features = false, features = ["rch", "codec-bincode"]}
+remoc = { path = "../../libs/remoc/remoc", default-features = false, features = ["rch", "codec-bincode"]}
 libote-sys = { path = "../../libs/libote-sys", optional = true }
 
 [dev-dependencies]

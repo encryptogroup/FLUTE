@@ -41,7 +41,7 @@ rangemap = "1.0.3"
 once_cell = "1.13.1"
 gmw-macros = {path = "../gmw-macros"}
 mpc-channel = {path = "../mpc-channel"}
-remoc = { path = "../../../remoc/remoc", default-features = false, features = ["rch", "codec-bincode"]}
+remoc = { path = "../../libs/remoc/remoc", default-features = false, features = ["rch", "codec-bincode"]}
 zappot = {path = "../zappot", features = ["silent_ot"]}
 typemap = "0.3.3"
 indexmap = "1.9.1"

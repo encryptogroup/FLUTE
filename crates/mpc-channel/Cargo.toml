@@ -17,7 +17,7 @@ tokio = { version = "1.21.1", features = ["macros", "net"]}
 tokio-serde = { version = "0.8.0", features = ["bincode"]}
 tokio-util = { version = "0.7.3", features = ["codec"]}
 tracing = "0.1.36"
-remoc = { path = "../../../remoc/remoc", default-features = false, features = ["rch", "codec-bincode"]}
+remoc = { path = "../../libs/remoc/remoc", default-features = false, features = ["rch", "codec-bincode"]}
 mpc-channel-macros = {path = "../mpc-channel-macros"}
 
 [dev-dependencies]

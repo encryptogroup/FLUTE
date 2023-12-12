@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
 members = ["crates/*"]
-exclude = ["libs/coproto-sys", "libs/libote-sys"]
+exclude = ["libs/libote-sys", "libs/remoc"]
 
 [profile.release]
 debug = 1

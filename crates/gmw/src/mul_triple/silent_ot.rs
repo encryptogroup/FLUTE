@@ -152,6 +152,7 @@ mod tests {
     use rand::rngs::OsRng;
 
     #[tokio::test]
+    #[cfg(feature = "silent_ot_silver")]
     async fn silent_mts() {
         let (ch11, ch21) = mpc_channel::in_memory::new_pair(128);
         let (ch12, ch22) = mpc_channel::in_memory::new_pair(128);

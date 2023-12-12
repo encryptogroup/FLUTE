@@ -5,7 +5,7 @@ pub use circuit::Circuit;
 pub use circuit::GateId;
 pub use gmw_macros::sub_circuit;
 pub use parse::bristol;
-pub use protocols::boolean_gmw::BooleanGate;
+pub use protocols::boolean_gmw::{BooleanGate, BooleanGmw};
 pub use utils::BitMask;
 
 pub mod circuit;

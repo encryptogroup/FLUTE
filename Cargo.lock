@@ -688,6 +688,7 @@ dependencies = [
  "curve25519-dalek-derive",
  "fiat-crypto",
  "platforms",
+ "rand_core 0.6.4",
  "rustc_version",
  "serde",
  "subtle",

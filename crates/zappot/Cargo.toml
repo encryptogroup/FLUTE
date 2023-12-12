@@ -20,7 +20,7 @@ bitpolymul = {path = "../bitpolymul", optional = true}
 bitvec = "1.0.0"
 bytemuck = { version = "1.9.1", features = ["derive", "extern_crate_alloc"]}
 crossbeam-channel = "0.5.4"
-curve25519-dalek = { version = "4.0.0-pre.2", features = ["serde"]}
+curve25519-dalek = { version = "4.0.0-pre.2", features = ["serde", "rand_core"]}
 futures = { version = "0.3.21", features = ["executor"]}
 rand = "0.8.5"
 rand_core = "0.6.3"

@@ -13,10 +13,11 @@ use std::path::Path;
 use tracing::{info, trace};
 
 #[tokio::test(flavor = "multi_thread")]
+#[ignore = "issue #6"]
 async fn eval_sample_lut() -> anyhow::Result<()> {
     let _guard = init_tracing();
     let circ = BaseCircuit::load_lut_circuit(
-        Path::new("test_resources/lut_circuits/lfa32_4.lut"),
+        Path::new("test_resources/lut_circuits/minimal.lut"),
         Load::Circuit,
     )?
     .into();

@@ -347,9 +347,9 @@ pub(crate) fn sub_circuit_inputs<P: Protocol, Idx: GateIdx>(
 ///# use gmw::circuit::{BaseCircuit, DefaultIdx};
 ///# use gmw::share_wrapper::{inputs, low_depth_reduce};
 ///# use parking_lot::Mutex;
-///# use gmw::{BooleanGate, Circuit, CircuitBuilder};
+///# use gmw::{BooleanGate, Circuit, CircuitBuilder, BooleanGmw};
 ///#
-/// let inputs = inputs::<DefaultIdx>(23);
+/// let inputs = inputs::<BooleanGmw, DefaultIdx>(23);
 /// low_depth_reduce(inputs, std::ops::BitAnd::bitand)
 ///     .unwrap()
 ///     .output();

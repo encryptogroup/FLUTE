@@ -56,7 +56,7 @@ impl BaseROTSender for Sender {
         RNG: RngCore + CryptoRng + Send,
     {
         let a = Scalar::random(rng);
-        let mut A = &RISTRETTO_BASEPOINT_TABLE * &a;
+        let mut A = RISTRETTO_BASEPOINT_TABLE * &a;
         let seed: Block = rng.gen();
         // TODO: libOTE uses fixedKeyAES hash here, using Blake should be fine and not really
         //  impact performance
@@ -130,7 +130,7 @@ impl BaseROTReceiver for Receiver {
             .iter()
             .map(|choice| {
                 let b = Scalar::random(rng);
-                let B_0 = &RISTRETTO_BASEPOINT_TABLE * &b;
+                let B_0 = RISTRETTO_BASEPOINT_TABLE * &b;
                 let B = [B_0, A + B_0];
                 (b, B[choice.as_usize()])
             })

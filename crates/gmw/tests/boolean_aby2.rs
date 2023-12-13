@@ -15,9 +15,10 @@ use tracing::{info, trace};
 #[tokio::test(flavor = "multi_thread")]
 #[ignore = "issue #6"]
 async fn eval_sample_lut() -> anyhow::Result<()> {
+    let test_lut_path = "test_resources/lut_circuits/minimal.lut";
     let _guard = init_tracing();
     let circ = BaseCircuit::load_lut_circuit(
-        Path::new("test_resources/lut_circuits/minimal.lut"),
+        Path::new(test_lut_path),
         Load::Circuit,
     )?
     .into();
@@ -116,7 +117,7 @@ async fn eval_sample_lut() -> anyhow::Result<()> {
         .collect();
 
     let lut_circ =
-        lut_circuit::Circuit::load(Path::new("test_resources/lut_circuits/lfa32_4.lut"))?;
+        lut_circuit::Circuit::load(Path::new(test_lut_path))?;
     // let mut inp = bitvec![u8, Msb0; 1;8];
     // inp[0..32].store_be(0_u32);
     // inp[32..64].store_be(0_u32);

@@ -14,7 +14,7 @@ use crate::share_wrapper::ShareWrapper;
 use crate::{bristol, BooleanGate, Circuit, CircuitBuilder, GateId, SubCircuitGate};
 use ahash::AHashMap;
 use async_trait::async_trait;
-use bitvec::order::Lsb0;
+use bitvec::order::{Lsb0, Msb0};
 use bitvec::view::BitView;
 use bitvec::{bitvec, slice, vec};
 use itertools::Itertools;
@@ -70,7 +70,7 @@ pub enum Msg {
 pub enum LutGate {
     Base(BaseGate<Share>),
     Lut {
-        output_mask: vec::BitVec<u8, Lsb0>,
+        output_mask: vec::BitVec<u8, Msb0>,
         inputs: u8,
     },
     Xor,
@@ -371,8 +371,7 @@ impl LutGate {
 
     fn and() -> Self {
         LutGate::Lut {
-            // TODO is the order of bits correct?
-            output_mask: bitvec![u8, Lsb0; 0,0,0,1],
+            output_mask: bitvec![u8, Msb0; 0,0,0,1],
             inputs: 2,
         }
     }
@@ -947,7 +946,7 @@ where
 
 fn expand(
     input_size: u8,
-    lut_output: &slice::BitSlice<u8, Lsb0>,
+    lut_output: &slice::BitSlice<u8, Msb0>,
     input: &slice::BitSlice<u8>,
 ) -> Vec<BitVec<u64>> {
     let lut_set_bits = lut_output.count_ones();
@@ -1197,7 +1196,7 @@ mod tests {
 
     #[test]
     fn expand_output() {
-        let expanded = expand(3, bits![u8, Lsb0; 0,1,1,0,1,1,0,1], bits![u8, Lsb0; 0;8]);
+        let expanded = expand(3, bits![u8, Msb0; 0,1,1,0,1,1,0,1], bits![u8, Lsb0; 0;8]);
         let expected = vec![
             bitvec![u8, Msb0; 1,1,0,0,0],
             bitvec![u8, Msb0; 1,0,1,1,0],
